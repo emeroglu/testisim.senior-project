@@ -1,0 +1,89 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.testisim"
+        minSdkVersion 19
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters 'armeabi-v7a', 'x86'
+        }
+    }
+
+    aaptOptions {
+        noCompress '.unity3d', '.ress', '.resource', '.obb'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+    testImplementation 'junit:junit:4.12'
+
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+
+    implementation 'com.google.code.gson:gson:2.8.2'
+
+    implementation 'com.google.firebase:firebase-core:16.0.4'
+    implementation 'com.google.firebase:firebase-database:16.0.4'
+    implementation 'com.google.firebase:firebase-auth:16.0.5'
+
+}
+
+apply plugin: 'com.google.gms.google-services'
+
+task unity(group: 'unity') {
+
+    ext.dir = projectDir
+    ext.udir = "${projectDir.toString().split("/Testisim/Testisim/")[0]}/Testisim/Unity/Export/Unity"
+    ext.rm = { folder ->
+        exec {
+            commandLine 'rm', '-R', "$dir$folder"
+        }
+    }
+    ext.mkdir = { folder ->
+        exec {
+            commandLine 'mkdir', "$dir$folder"
+        }
+    }
+    ext.cp = { from, to ->
+        exec {
+            executable 'cp'
+            args '-R', "$udir$from", "$dir$to"
+        }
+    }
+    ext.mv = { from, to ->
+        exec {
+            commandLine 'mv', "$dir$from", "$dir$to"
+        }
+    }
+
+    doLast  { rm '/libs' } << { rm '/src/main/assets' } << { rm '/src/main/jniLibs' }
+    doLast  { mkdir '/libs' } << { mkdir '/src/main/assets' } << { mkdir '/src/main/jniLibs' }
+    doLast { cp '/libs', '' } << { cp '/src/main/assets', '/src/main' } << { cp '/src/main/jniLibs', '/src/main' }
+    doLast { mv '/libs/unity-classes.jar', '/libs/unity.jar' }
+
+}
+
+preBuild.dependsOn unity
